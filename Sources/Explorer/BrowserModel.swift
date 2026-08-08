@@ -10,7 +10,7 @@ enum FileSortColumn {
 }
 
 extension Notification.Name {
-    static let explorerFilesDidMove = Notification.Name("ExplorerFilesDidMove")
+    static let explorerFilesDidMove = Notification.Name("ExplorerPPFilesDidMove")
 }
 
 @MainActor

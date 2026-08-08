@@ -3,16 +3,16 @@
 import PackageDescription
 
 let package = Package(
-    name: "Explorer",
+    name: "ExplorerPP",
     platforms: [
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "Explorer", targets: ["Explorer"])
+        .executable(name: "ExplorerPP", targets: ["ExplorerPP"])
     ],
     targets: [
         .executableTarget(
-            name: "Explorer",
+            name: "ExplorerPP",
             path: "Sources/Explorer"
         )
     ]

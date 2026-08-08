@@ -58,6 +58,7 @@ final class FolderSizeIndex {
 
     init(indexURL: URL? = nil) {
         self.indexURL = indexURL ?? Self.defaultIndexURL
+        Self.migrateLegacyIndexIfNeeded(to: self.indexURL)
         records = Self.load(from: self.indexURL)
         pruneOldRecords()
     }
@@ -161,7 +162,24 @@ final class FolderSizeIndex {
 
     private static var defaultIndexURL: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("ExplorerPP", isDirectory: true)
+            .appendingPathComponent("folder-sizes.json")
+    }
+
+    private static func migrateLegacyIndexIfNeeded(to newURL: URL) {
+        guard !FileManager.default.fileExists(atPath: newURL.path) else { return }
+        let legacyURL = FileManager.default.urls(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask
+        )[0]
             .appendingPathComponent("Explorer", isDirectory: true)
             .appendingPathComponent("folder-sizes.json")
+        guard FileManager.default.fileExists(atPath: legacyURL.path) else { return }
+
+        try? FileManager.default.createDirectory(
+            at: newURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try? FileManager.default.copyItem(at: legacyURL, to: newURL)
     }
 }

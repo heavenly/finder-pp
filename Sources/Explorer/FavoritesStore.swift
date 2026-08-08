@@ -5,12 +5,21 @@ import Observation
 @Observable
 final class FavoritesStore {
     private static let defaultsKey = "favoritePaths"
+    private static let appDefaults = UserDefaults(suiteName: "com.sanjayk.ExplorerPP") ?? .standard
 
     private(set) var urls: [URL]
     private let defaults: UserDefaults
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults = FavoritesStore.appDefaults) {
         self.defaults = defaults
+        if defaults.stringArray(forKey: Self.defaultsKey) == nil {
+            let legacyDefaults = UserDefaults(suiteName: "Explorer")
+            let legacyPaths = legacyDefaults?.stringArray(forKey: Self.defaultsKey)
+                ?? UserDefaults.standard.stringArray(forKey: Self.defaultsKey)
+            if let legacyPaths {
+                defaults.set(legacyPaths, forKey: Self.defaultsKey)
+            }
+        }
         let paths = defaults.stringArray(forKey: Self.defaultsKey) ?? []
         urls = paths.map { URL(fileURLWithPath: $0).standardizedFileURL }
     }

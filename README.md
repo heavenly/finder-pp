@@ -1,6 +1,6 @@
-# Explorer
+# ExplorerPP
 
-Explorer is a native macOS file browser with a Windows Explorer-style path bar.
+ExplorerPP is a native macOS file browser with a Windows Explorer-style path bar.
 It is an alternative file browser. It does not replace the protected Finder
 process.
 
@@ -12,7 +12,7 @@ process.
 - Independent windows with **Command-E**.
 - File details and native file icons.
 - Double-click to open folders and files.
-- Drag files between Explorer windows to move them.
+- Drag files between ExplorerPP windows to move them.
 - Drag files onto a folder row to move them into that folder.
 - Create folders with **Command-Shift-N**.
 - Rename one selected item with **Return**.
@@ -28,7 +28,7 @@ process.
 - Click Name, Date modified, Type, or Size to sort in ascending or descending order.
 - Show small image, video, and audio previews in file rows when Quick Look supports them.
 
-Explorer hides hidden files in this first release. A move stops if the target
+ExplorerPP hides hidden files in this first release. A move stops if the target
 already contains an item with the same name. The app does not overwrite files.
 
 ## Run
@@ -36,7 +36,7 @@ already contains an item with the same name. The app does not overwrite files.
 Requirements: macOS 14 or later and Xcode 16 or later.
 
 ```sh
-swift run Explorer
+swift run ExplorerPP
 ```
 
 ## Build
@@ -45,8 +45,34 @@ swift run Explorer
 swift build -c release
 ```
 
-The executable is at `.build/release/Explorer`. An Xcode app target, signing,
-sandbox permissions, and DMG packaging are separate distribution steps.
+The executable is at `.build/release/ExplorerPP`.
+
+## Package
+
+Create a signed local application bundle and DMG:
+
+```sh
+./Scripts/package-app.sh
+```
+
+Outputs:
+
+- `dist/ExplorerPP.app`
+- `dist/ExplorerPP.dmg`
+
+The default signature is ad hoc and is suitable for local use. To use an
+installed Developer ID certificate, provide its exact identity:
+
+```sh
+SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" ./Scripts/package-app.sh
+```
+
+Developer ID distribution also requires Apple notarization. The packaging
+script does not store or request signing credentials.
+
+ExplorerPP remains running after its last window closes. It hides its Dock icon
+while it has no visible windows. Open ExplorerPP again to create or restore a
+window.
 
 ## Roadmap
 
@@ -54,4 +80,4 @@ sandbox permissions, and DMG packaging are separate distribution steps.
 2. Add tabs, configurable columns, sorting, and hidden-file controls.
 3. Add Quick Look, search, network shares, and mounted-volume navigation.
 4. Add state restoration and saved favorites.
-5. Add an Xcode distribution target, app icon, signing, notarization, and DMG.
+5. Add Developer ID notarization and automatic updates.

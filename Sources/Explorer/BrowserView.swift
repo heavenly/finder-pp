@@ -23,7 +23,7 @@ struct BrowserView: View {
         }
         .navigationTitle(model.currentURL.lastPathComponent.isEmpty ? "Mac" : model.currentURL.lastPathComponent)
         .focusedSceneValue(\.browserModel, model)
-        .alert("Explorer", isPresented: errorIsPresented) {
+        .alert("ExplorerPP", isPresented: errorIsPresented) {
             Button("OK") {
                 model.errorMessage = nil
             }

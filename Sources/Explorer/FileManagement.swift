@@ -142,7 +142,7 @@ extension BrowserModel {
 }
 
 extension NSPasteboard.PasteboardType {
-    static let explorerCutFiles = NSPasteboard.PasteboardType("works.earendil.explorer.cut-files")
+    static let explorerCutFiles = NSPasteboard.PasteboardType("com.sanjayk.explorerpp.cut-files")
 }
 
 @MainActor

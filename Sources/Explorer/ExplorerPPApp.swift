@@ -2,41 +2,119 @@ import AppKit
 import SwiftUI
 
 @main
-struct ExplorerApp: App {
-    @NSApplicationDelegateAdaptor(ExplorerAppDelegate.self) private var appDelegate
+struct ExplorerPPApp: App {
+    @NSApplicationDelegateAdaptor(ExplorerPPAppDelegate.self) private var appDelegate
     @State private var favorites = FavoritesStore()
     @State private var folderSizeIndex = FolderSizeIndex()
     @State private var mediaThumbnails = MediaThumbnailStore()
 
     var body: some Scene {
-        WindowGroup("Explorer", id: "browser") {
+        WindowGroup("ExplorerPP", id: "browser") {
             BrowserView()
                 .environment(favorites)
                 .environment(folderSizeIndex)
                 .environment(mediaThumbnails)
                 .preferredColorScheme(nil)
+                .modifier(WindowBridgeInstaller())
         }
         .defaultSize(width: 1_050, height: 680)
         .commands {
-            ExplorerCommands()
+            ExplorerPPCommands()
         }
     }
 }
 
-private final class ExplorerAppDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApplication.shared.setActivationPolicy(.regular)
-        NSApplication.shared.activate(ignoringOtherApps: true)
+@MainActor
+private enum ExplorerPPWindowBridge {
+    static var openWindow: (() -> Void)?
+}
+
+private struct WindowBridgeInstaller: ViewModifier {
+    @Environment(\.openWindow) private var openWindow
+
+    func body(content: Content) -> some View {
+        content.onAppear {
+            ExplorerPPWindowBridge.openWindow = {
+                openWindow(id: "browser")
+            }
+        }
     }
 }
 
-private struct ExplorerCommands: Commands {
+@MainActor
+private final class ExplorerPPAppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        let center = NotificationCenter.default
+        center.addObserver(
+            self,
+            selector: #selector(windowDidBecomeKey),
+            name: NSWindow.didBecomeKeyNotification,
+            object: nil
+        )
+        center.addObserver(
+            self,
+            selector: #selector(windowWillClose),
+            name: NSWindow.willCloseNotification,
+            object: nil
+        )
+
+        Task { @MainActor in
+            await Task.yield()
+            updateActivationPolicy()
+            if hasVisibleWindow {
+                NSApplication.shared.activate(ignoringOtherApps: true)
+            }
+        }
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
+    func applicationShouldHandleReopen(
+        _ sender: NSApplication,
+        hasVisibleWindows flag: Bool
+    ) -> Bool {
+        sender.setActivationPolicy(.regular)
+
+        if let window = sender.windows.first(where: { $0.canBecomeKey }) {
+            window.makeKeyAndOrderFront(nil)
+        } else {
+            ExplorerPPWindowBridge.openWindow?()
+        }
+        sender.activate(ignoringOtherApps: true)
+        return false
+    }
+
+    @objc private func windowDidBecomeKey(_ notification: Notification) {
+        NSApplication.shared.setActivationPolicy(.regular)
+    }
+
+    @objc private func windowWillClose(_ notification: Notification) {
+        Task { @MainActor in
+            await Task.yield()
+            updateActivationPolicy()
+        }
+    }
+
+    @MainActor
+    private var hasVisibleWindow: Bool {
+        NSApplication.shared.windows.contains { $0.isVisible && $0.canBecomeKey }
+    }
+
+    @MainActor
+    private func updateActivationPolicy() {
+        NSApplication.shared.setActivationPolicy(hasVisibleWindow ? .regular : .accessory)
+    }
+}
+
+private struct ExplorerPPCommands: Commands {
     @Environment(\.openWindow) private var openWindow
     @FocusedValue(\.browserModel) private var browserModel
 
     var body: some Commands {
         CommandGroup(after: .newItem) {
-            Button("New Explorer Window") {
+            Button("New ExplorerPP Window") {
                 openWindow(id: "browser")
             }
             .keyboardShortcut("e", modifiers: .command)
