@@ -10,6 +10,7 @@ process.
 - Click the path bar to type or paste a path.
 - Back, Forward, Up, and Refresh actions.
 - Independent windows with **Command-E**.
+- Use **Command-E** system-wide while ExplorerPP is running to open a new window.
 - File details and native file icons.
 - Double-click to open folders and files.
 - Drag files between ExplorerPP windows to move them.

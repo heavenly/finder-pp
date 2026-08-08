@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import SwiftUI
 
 @main
@@ -27,6 +28,23 @@ struct ExplorerPPApp: App {
 @MainActor
 private enum ExplorerPPWindowBridge {
     static var openWindow: (() -> Void)?
+
+    static func openNewWindow() {
+        NSApplication.shared.setActivationPolicy(.regular)
+        openWindow?()
+        NSApplication.shared.activate(ignoringOtherApps: true)
+    }
+}
+
+private func explorerPPGlobalHotKeyHandler(
+    _ nextHandler: EventHandlerCallRef?,
+    _ event: EventRef?,
+    _ userData: UnsafeMutableRawPointer?
+) -> OSStatus {
+    Task { @MainActor in
+        ExplorerPPWindowBridge.openNewWindow()
+    }
+    return noErr
 }
 
 private struct WindowBridgeInstaller: ViewModifier {
@@ -43,7 +61,12 @@ private struct WindowBridgeInstaller: ViewModifier {
 
 @MainActor
 private final class ExplorerPPAppDelegate: NSObject, NSApplicationDelegate {
+    private var globalHotKey: EventHotKeyRef?
+    private var globalHotKeyHandler: EventHandlerRef?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        installGlobalHotKey()
+
         let center = NotificationCenter.default
         center.addObserver(
             self,
@@ -69,6 +92,15 @@ private final class ExplorerPPAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        if let globalHotKey {
+            UnregisterEventHotKey(globalHotKey)
+        }
+        if let globalHotKeyHandler {
+            RemoveEventHandler(globalHotKeyHandler)
+        }
     }
 
     func applicationShouldHandleReopen(
@@ -105,6 +137,41 @@ private final class ExplorerPPAppDelegate: NSObject, NSApplicationDelegate {
     @MainActor
     private func updateActivationPolicy() {
         NSApplication.shared.setActivationPolicy(hasVisibleWindow ? .regular : .accessory)
+    }
+
+    private func installGlobalHotKey() {
+        var eventType = EventTypeSpec(
+            eventClass: OSType(kEventClassKeyboard),
+            eventKind: UInt32(kEventHotKeyPressed)
+        )
+        let handlerStatus = InstallEventHandler(
+            GetApplicationEventTarget(),
+            explorerPPGlobalHotKeyHandler,
+            1,
+            &eventType,
+            nil,
+            &globalHotKeyHandler
+        )
+        guard handlerStatus == noErr else {
+            NSLog("ExplorerPP could not install its global hotkey handler: %d", handlerStatus)
+            return
+        }
+
+        let hotKeyID = EventHotKeyID(
+            signature: OSType(0x45505050),
+            id: 1
+        )
+        let registrationStatus = RegisterEventHotKey(
+            UInt32(kVK_ANSI_E),
+            UInt32(cmdKey),
+            hotKeyID,
+            GetApplicationEventTarget(),
+            0,
+            &globalHotKey
+        )
+        if registrationStatus != noErr {
+            NSLog("ExplorerPP could not register Command-E globally: %d", registrationStatus)
+        }
     }
 }
 
