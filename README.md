@@ -21,6 +21,8 @@ process.
 - Right-click items for file-management actions.
 - Use the right-click **Open With** submenu to choose a compatible application.
 - Press **Command-F** to filter the current folder by file name.
+- Right-click a file or folder to add it to the persistent Favorites section.
+- Follow the current macOS light or dark appearance automatically.
 
 Explorer hides hidden files in this first release. A move stops if the target
 already contains an item with the same name. The app does not overwrite files.

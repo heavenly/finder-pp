@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 
 struct BrowserView: View {
+    @Environment(FavoritesStore.self) private var favorites
     @State private var model = BrowserModel()
     @State private var isCurrentFolderTargeted = false
     @State private var selectionAnchor: URL?
@@ -9,7 +10,7 @@ struct BrowserView: View {
 
     var body: some View {
         NavigationSplitView {
-            Sidebar(model: model)
+            Sidebar(model: model, favorites: favorites)
         } detail: {
             VStack(spacing: 0) {
                 navigationBar
@@ -219,6 +220,12 @@ struct BrowserView: View {
                         selectForContextMenu(entry.url)
                         model.moveSelectedItemsToTrash()
                     }
+
+                    Divider()
+
+                    Button(favorites.contains(entry.url) ? "Remove from Favorites" : "Add to Favorites") {
+                        favorites.toggle(entry.url)
+                    }
                 }
                 .draggable(entry.url) {
                     Label(entry.name, systemImage: entry.isDirectory ? "folder.fill" : "doc")
@@ -250,6 +257,9 @@ struct BrowserView: View {
         .contextMenu {
             Button("New Folder", action: createFolder)
             Button("Paste", action: { model.pasteItems() })
+            Button(favorites.contains(model.currentURL) ? "Remove Current Folder from Favorites" : "Add Current Folder to Favorites") {
+                favorites.toggle(model.currentURL)
+            }
             Divider()
             Button("Refresh", action: model.reload)
         }
@@ -358,6 +368,7 @@ private struct FileRow: View {
 
 private struct Sidebar: View {
     let model: BrowserModel
+    let favorites: FavoritesStore
 
     private struct Location: Identifiable {
         let name: String
@@ -390,6 +401,39 @@ private struct Sidebar: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                }
+            }
+
+            Section("Favorites") {
+                if favorites.urls.isEmpty {
+                    Text("Right-click an item to add it")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(favorites.urls, id: \.self) { url in
+                        Button {
+                            model.open(url)
+                        } label: {
+                            Label {
+                                Text(url.lastPathComponent.isEmpty ? "Mac" : url.lastPathComponent)
+                                    .lineLimit(1)
+                            } icon: {
+                                Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .contextMenu {
+                            Button("Open") {
+                                model.open(url)
+                            }
+                            Divider()
+                            Button("Remove from Favorites") {
+                                favorites.remove(url)
+                            }
+                        }
+                    }
                 }
             }
         }
