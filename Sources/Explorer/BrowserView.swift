@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct BrowserView: View {
     @Environment(FavoritesStore.self) private var favorites
@@ -234,6 +235,12 @@ struct BrowserView: View {
                                 }
                             }
                         }
+
+                        Divider()
+
+                        Button("Other…") {
+                            chooseApplication(for: entry.url)
+                        }
                     }
 
                     Divider()
@@ -378,6 +385,21 @@ struct BrowserView: View {
                 $1.deletingPathExtension().lastPathComponent
             ) == .orderedAscending
         }
+    }
+
+    private func chooseApplication(for fileURL: URL) {
+        let panel = NSOpenPanel()
+        panel.title = "Choose an Application"
+        panel.prompt = "Open"
+        panel.directoryURL = URL(fileURLWithPath: "/Applications", isDirectory: true)
+        panel.allowedContentTypes = [.application]
+        panel.allowsMultipleSelection = false
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.treatsFilePackagesAsDirectories = false
+
+        guard panel.runModal() == .OK, let applicationURL = panel.url else { return }
+        model.open(fileURL, with: applicationURL)
     }
 
     private func closeFind() {
