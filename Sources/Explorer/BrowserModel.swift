@@ -2,6 +2,13 @@ import AppKit
 import Foundation
 import Observation
 
+enum FileSortColumn {
+    case name
+    case modificationDate
+    case kind
+    case size
+}
+
 extension Notification.Name {
     static let explorerFilesDidMove = Notification.Name("ExplorerFilesDidMove")
 }
@@ -17,6 +24,8 @@ final class BrowserModel {
     var errorMessage: String?
     var searchText = ""
     var isFindPresented = false
+    var sortColumn: FileSortColumn = .name
+    var sortAscending = true
     let pasteboard: NSPasteboard
 
     init(
@@ -31,10 +40,21 @@ final class BrowserModel {
     var canGoBack: Bool { !backHistory.isEmpty }
     var canGoForward: Bool { !forwardHistory.isEmpty }
     var canGoUp: Bool { currentURL.path != "/" }
-    var visibleEntries: [FileEntry] {
-        guard !searchText.isEmpty else { return entries }
-        return entries.filter {
+    func visibleEntries(folderSizes: [String: Int64]) -> [FileEntry] {
+        let filteredEntries = searchText.isEmpty ? entries : entries.filter {
             $0.name.localizedCaseInsensitiveContains(searchText)
+        }
+        return filteredEntries.sorted {
+            compare($0, $1, folderSizes: folderSizes)
+        }
+    }
+
+    func selectSortColumn(_ column: FileSortColumn) {
+        if sortColumn == column {
+            sortAscending.toggle()
+        } else {
+            sortColumn = column
+            sortAscending = true
         }
     }
 
@@ -185,5 +205,44 @@ final class BrowserModel {
         var isDirectory: ObjCBool = false
         return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
             && isDirectory.boolValue
+    }
+
+    private func compare(
+        _ left: FileEntry,
+        _ right: FileEntry,
+        folderSizes: [String: Int64]
+    ) -> Bool {
+        if left.isDirectory != right.isDirectory {
+            return left.isDirectory
+        }
+
+        let result: ComparisonResult
+        switch sortColumn {
+        case .name:
+            result = left.name.localizedStandardCompare(right.name)
+        case .modificationDate:
+            result = compare(left.modificationDate ?? .distantPast, right.modificationDate ?? .distantPast)
+        case .kind:
+            result = left.kind.localizedStandardCompare(right.kind)
+        case .size:
+            let leftSize = left.isDirectory
+                ? folderSizes[left.url.standardizedFileURL.path] ?? -1
+                : left.size ?? -1
+            let rightSize = right.isDirectory
+                ? folderSizes[right.url.standardizedFileURL.path] ?? -1
+                : right.size ?? -1
+            result = compare(leftSize, rightSize)
+        }
+
+        if result == .orderedSame, sortColumn != .name {
+            return left.name.localizedStandardCompare(right.name) == .orderedAscending
+        }
+        return sortAscending ? result == .orderedAscending : result == .orderedDescending
+    }
+
+    private func compare<T: Comparable>(_ left: T, _ right: T) -> ComparisonResult {
+        if left < right { return .orderedAscending }
+        if left > right { return .orderedDescending }
+        return .orderedSame
     }
 }

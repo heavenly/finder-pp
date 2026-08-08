@@ -52,6 +52,10 @@ final class FolderSizeIndex {
 
     private let indexURL: URL
 
+    var sizesByPath: [String: Int64] {
+        records.mapValues(\.size)
+    }
+
     init(indexURL: URL? = nil) {
         self.indexURL = indexURL ?? Self.defaultIndexURL
         records = Self.load(from: self.indexURL)

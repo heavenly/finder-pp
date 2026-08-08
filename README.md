@@ -25,6 +25,7 @@ process.
 - Follow the current macOS light or dark appearance automatically.
 - Calculate folder sizes in the background and cache them between launches.
 - Right-click a folder and select **Recalculate Folder Size** to refresh its cached value.
+- Click Name, Date modified, Type, or Size to sort in ascending or descending order.
 
 Explorer hides hidden files in this first release. A move stops if the target
 already contains an item with the same name. The app does not overwrite files.

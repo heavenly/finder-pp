@@ -150,13 +150,38 @@ struct BrowserView: View {
 
     private var fileHeader: some View {
         HStack(spacing: 12) {
-            Text("Name")
+            SortHeader(
+                title: "Name",
+                column: .name,
+                selectedColumn: model.sortColumn,
+                ascending: model.sortAscending,
+                action: model.selectSortColumn
+            )
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Text("Date modified")
+            SortHeader(
+                title: "Date modified",
+                column: .modificationDate,
+                selectedColumn: model.sortColumn,
+                ascending: model.sortAscending,
+                action: model.selectSortColumn
+            )
                 .frame(width: 150, alignment: .leading)
-            Text("Type")
+            SortHeader(
+                title: "Type",
+                column: .kind,
+                selectedColumn: model.sortColumn,
+                ascending: model.sortAscending,
+                action: model.selectSortColumn
+            )
                 .frame(width: 110, alignment: .leading)
-            Text("Size")
+            SortHeader(
+                title: "Size",
+                column: .size,
+                selectedColumn: model.sortColumn,
+                ascending: model.sortAscending,
+                alignment: .trailing,
+                action: model.selectSortColumn
+            )
                 .frame(width: 90, alignment: .trailing)
         }
         .font(.caption)
@@ -166,7 +191,7 @@ struct BrowserView: View {
     }
 
     private var fileList: some View {
-        List(model.visibleEntries, selection: $model.selectedURLs) { entry in
+        List(displayedEntries, selection: $model.selectedURLs) { entry in
             FileRow(entry: entry, sizeText: folderSizeIndex.formattedSize(for: entry))
                 .tag(entry.url)
                 .contentShape(Rectangle())
@@ -265,7 +290,7 @@ struct BrowserView: View {
                     systemImage: "folder",
                     description: Text("Drag files here to move them into this folder.")
                 )
-            } else if model.visibleEntries.isEmpty {
+            } else if displayedEntries.isEmpty {
                 ContentUnavailableView.search(text: model.searchText)
             }
         }
@@ -324,7 +349,7 @@ struct BrowserView: View {
     }
 
     private func select(_ url: URL, modifiers: NSEvent.ModifierFlags) {
-        let entries = model.visibleEntries
+        let entries = displayedEntries
         if modifiers.contains(.shift),
            let selectionAnchor,
            let anchorIndex = entries.firstIndex(where: { $0.url == selectionAnchor }),
@@ -357,6 +382,10 @@ struct BrowserView: View {
         model.searchText = ""
         model.isFindPresented = false
         searchFieldIsFocused = false
+    }
+
+    private var displayedEntries: [FileEntry] {
+        model.visibleEntries(folderSizes: folderSizeIndex.sizesByPath)
     }
 }
 
@@ -507,5 +536,33 @@ private struct ToolbarSeparator: View {
             .fill(.separator)
             .frame(width: 1, height: 18)
             .padding(.horizontal, 2)
+    }
+}
+
+private struct SortHeader: View {
+    let title: String
+    let column: FileSortColumn
+    let selectedColumn: FileSortColumn
+    let ascending: Bool
+    var alignment: Alignment = .leading
+    let action: (FileSortColumn) -> Void
+
+    var body: some View {
+        Button {
+            action(column)
+        } label: {
+            HStack(spacing: 4) {
+                Text(title)
+                if selectedColumn == column {
+                    Image(systemName: ascending ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 8, weight: .bold))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: alignment)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .focusable(false)
+        .help("Sort by \(title)")
     }
 }
