@@ -5,6 +5,7 @@ struct BrowserView: View {
     @State private var model = BrowserModel()
     @State private var isCurrentFolderTargeted = false
     @State private var selectionAnchor: URL?
+    @FocusState private var searchFieldIsFocused: Bool
 
     var body: some View {
         NavigationSplitView {
@@ -29,6 +30,9 @@ struct BrowserView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .explorerFilesDidMove)) { _ in
             model.reload()
+        }
+        .onChange(of: model.isFindPresented) {
+            searchFieldIsFocused = model.isFindPresented
         }
     }
 
@@ -62,6 +66,29 @@ struct BrowserView: View {
                 Image(systemName: "arrow.clockwise")
             }
             .help("Refresh")
+
+            if model.isFindPresented {
+                HStack(spacing: 4) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.secondary)
+                    TextField("Find in this folder", text: $model.searchText)
+                        .textFieldStyle(.plain)
+                        .focused($searchFieldIsFocused)
+                        .onExitCommand(perform: closeFind)
+                    Button(action: closeFind) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 7)
+                .frame(width: 210, height: 28)
+                .background(.background, in: RoundedRectangle(cornerRadius: 5))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 5)
+                        .stroke(.separator, lineWidth: 1)
+                }
+            }
 
             Divider()
                 .frame(height: 18)
@@ -123,7 +150,7 @@ struct BrowserView: View {
     }
 
     private var fileList: some View {
-        List(model.entries, selection: $model.selectedURLs) { entry in
+        List(model.visibleEntries, selection: $model.selectedURLs) { entry in
             FileRow(entry: entry)
                 .tag(entry.url)
                 .contentShape(Rectangle())
@@ -210,6 +237,8 @@ struct BrowserView: View {
                     systemImage: "folder",
                     description: Text("Drag files here to move them into this folder.")
                 )
+            } else if model.visibleEntries.isEmpty {
+                ContentUnavailableView.search(text: model.searchText)
             }
         }
         .background(isCurrentFolderTargeted ? Color.accentColor.opacity(0.12) : Color.clear)
@@ -264,12 +293,13 @@ struct BrowserView: View {
     }
 
     private func select(_ url: URL, modifiers: NSEvent.ModifierFlags) {
+        let entries = model.visibleEntries
         if modifiers.contains(.shift),
            let selectionAnchor,
-           let anchorIndex = model.entries.firstIndex(where: { $0.url == selectionAnchor }),
-           let selectedIndex = model.entries.firstIndex(where: { $0.url == url }) {
+           let anchorIndex = entries.firstIndex(where: { $0.url == selectionAnchor }),
+           let selectedIndex = entries.firstIndex(where: { $0.url == url }) {
             let range = min(anchorIndex, selectedIndex)...max(anchorIndex, selectedIndex)
-            model.selectedURLs = Set(range.map { model.entries[$0].url })
+            model.selectedURLs = Set(range.map { entries[$0].url })
         } else if modifiers.contains(.command) {
             if model.selectedURLs.contains(url) {
                 model.selectedURLs.remove(url)
@@ -290,6 +320,12 @@ struct BrowserView: View {
                 $1.deletingPathExtension().lastPathComponent
             ) == .orderedAscending
         }
+    }
+
+    private func closeFind() {
+        model.searchText = ""
+        model.isFindPresented = false
+        searchFieldIsFocused = false
     }
 }
 

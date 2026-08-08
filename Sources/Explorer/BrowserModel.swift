@@ -15,6 +15,8 @@ final class BrowserModel {
     private(set) var forwardHistory: [URL] = []
     var selectedURLs: Set<URL> = []
     var errorMessage: String?
+    var searchText = ""
+    var isFindPresented = false
     let pasteboard: NSPasteboard
 
     init(
@@ -29,6 +31,12 @@ final class BrowserModel {
     var canGoBack: Bool { !backHistory.isEmpty }
     var canGoForward: Bool { !forwardHistory.isEmpty }
     var canGoUp: Bool { currentURL.path != "/" }
+    var visibleEntries: [FileEntry] {
+        guard !searchText.isEmpty else { return entries }
+        return entries.filter {
+            $0.name.localizedCaseInsensitiveContains(searchText)
+        }
+    }
 
     func navigate(to url: URL) {
         let destination = url.standardizedFileURL
@@ -41,6 +49,7 @@ final class BrowserModel {
         backHistory.append(currentURL)
         forwardHistory.removeAll()
         currentURL = destination
+        searchText = ""
         selectedURLs.removeAll()
         reload()
     }
@@ -59,6 +68,7 @@ final class BrowserModel {
         guard let destination = backHistory.popLast() else { return }
         forwardHistory.append(currentURL)
         currentURL = destination
+        searchText = ""
         selectedURLs.removeAll()
         reload()
     }
@@ -67,6 +77,7 @@ final class BrowserModel {
         guard let destination = forwardHistory.popLast() else { return }
         backHistory.append(currentURL)
         currentURL = destination
+        searchText = ""
         selectedURLs.removeAll()
         reload()
     }
@@ -95,6 +106,10 @@ final class BrowserModel {
                 self?.errorMessage = "Could not open “\(url.lastPathComponent)” with “\(applicationURL.deletingPathExtension().lastPathComponent)”.\n\(error.localizedDescription)"
             }
         }
+    }
+
+    func beginFind() {
+        isFindPresented = true
     }
 
     @discardableResult

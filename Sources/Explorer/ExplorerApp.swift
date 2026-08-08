@@ -68,6 +68,12 @@ private struct ExplorerCommands: Commands {
             .keyboardShortcut("v", modifiers: .command)
             .disabled(browserModel == nil)
 
+            Button("Find") {
+                browserModel?.beginFind()
+            }
+            .keyboardShortcut("f", modifiers: .command)
+            .disabled(browserModel == nil)
+
             Divider()
 
             Button("Move to Trash") {
