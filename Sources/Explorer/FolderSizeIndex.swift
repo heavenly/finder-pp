@@ -64,7 +64,7 @@ final class FolderSizeIndex {
     }
 
     func index(_ entries: [FileEntry]) {
-        for entry in entries where entry.isDirectory {
+        for entry in entries where entry.isDirectory && !isProtectedHomeFolder(entry.url) {
             let path = entry.url.standardizedFileURL.path
             if let record = records[path], record.modificationDate == entry.modificationDate {
                 continue
@@ -93,6 +93,9 @@ final class FolderSizeIndex {
         }
         if let record = records[path], record.modificationDate == entry.modificationDate {
             return ByteCountFormatter.string(fromByteCount: record.size, countStyle: .file)
+        }
+        if isProtectedHomeFolder(entry.url) {
+            return "—"
         }
         return "Waiting…"
     }
@@ -150,6 +153,13 @@ final class FolderSizeIndex {
     private func pruneOldRecords() {
         let cutoff = Date.now.addingTimeInterval(-90 * 24 * 60 * 60)
         records = records.filter { $0.value.scannedAt >= cutoff }
+    }
+
+    private func isProtectedHomeFolder(_ url: URL) -> Bool {
+        let home = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL
+        guard url.deletingLastPathComponent().standardizedFileURL == home else { return false }
+        return ["Desktop", "Documents", "Downloads", "Movies", "Music", "Pictures"]
+            .contains(url.lastPathComponent)
     }
 
     private static func load(from url: URL) -> [String: FolderSizeRecord] {

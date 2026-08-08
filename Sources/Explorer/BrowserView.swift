@@ -25,8 +25,18 @@ struct BrowserView: View {
         .navigationTitle(model.currentURL.lastPathComponent.isEmpty ? "Mac" : model.currentURL.lastPathComponent)
         .focusedSceneValue(\.browserModel, model)
         .alert("ExplorerPP", isPresented: errorIsPresented) {
-            Button("OK") {
-                model.errorMessage = nil
+            if model.permissionRequestURL != nil {
+                Button("Choose Folder…") {
+                    requestFolderAccess()
+                }
+                Button("Cancel", role: .cancel) {
+                    model.errorMessage = nil
+                    model.permissionRequestURL = nil
+                }
+            } else {
+                Button("OK") {
+                    model.errorMessage = nil
+                }
             }
         } message: {
             Text(model.errorMessage ?? "")
@@ -406,6 +416,29 @@ struct BrowserView: View {
         model.searchText = ""
         model.isFindPresented = false
         searchFieldIsFocused = false
+    }
+
+    private func requestFolderAccess() {
+        guard let requestedURL = model.permissionRequestURL else { return }
+
+        let panel = NSOpenPanel()
+        panel.title = "Allow Folder Access"
+        panel.message = "Choose “\(requestedURL.lastPathComponent)” to allow ExplorerPP to open it."
+        panel.prompt = "Allow Access"
+        panel.directoryURL = requestedURL
+        panel.allowsMultipleSelection = false
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.canCreateDirectories = false
+
+        guard panel.runModal() == .OK, let selectedURL = panel.url else { return }
+        model.errorMessage = nil
+        model.permissionRequestURL = nil
+        if selectedURL.standardizedFileURL == model.currentURL.standardizedFileURL {
+            model.reload()
+        } else {
+            model.navigate(to: selectedURL)
+        }
     }
 
     private var displayedEntries: [FileEntry] {

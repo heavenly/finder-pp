@@ -18,6 +18,8 @@ cleanup() {
 trap cleanup EXIT
 
 cd "$ROOT_DIR"
+
+printf 'Signing with: %s\n' "$SIGN_IDENTITY"
 swift build -c "$CONFIGURATION" --product "$PRODUCT_NAME"
 BIN_DIR="$(swift build -c "$CONFIGURATION" --show-bin-path)"
 

@@ -22,6 +22,7 @@ final class BrowserModel {
     private(set) var forwardHistory: [URL] = []
     var selectedURLs: Set<URL> = []
     var errorMessage: String?
+    var permissionRequestURL: URL?
     var searchText = ""
     var isFindPresented = false
     var sortColumn: FileSortColumn = .name
@@ -195,8 +196,10 @@ final class BrowserModel {
                 }
                 return $0.name.localizedStandardCompare($1.name) == .orderedAscending
             }
+            permissionRequestURL = nil
         } catch {
             entries = []
+            permissionRequestURL = isPermissionError(error) ? currentURL : nil
             errorMessage = "Could not read “\(currentURL.path)”.\n\(error.localizedDescription)"
         }
     }
@@ -205,6 +208,16 @@ final class BrowserModel {
         var isDirectory: ObjCBool = false
         return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
             && isDirectory.boolValue
+    }
+
+    private func isPermissionError(_ error: Error) -> Bool {
+        let error = error as NSError
+        if error.domain == NSCocoaErrorDomain,
+           error.code == CocoaError.fileReadNoPermission.rawValue {
+            return true
+        }
+        return error.domain == NSPOSIXErrorDomain
+            && (error.code == Int(EACCES) || error.code == Int(EPERM))
     }
 
     private func compare(

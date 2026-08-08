@@ -61,7 +61,7 @@ Outputs:
 - `dist/ExplorerPP.app`
 - `dist/ExplorerPP.dmg`
 
-The default signature is ad hoc and is suitable for local use. To use an
+The default package uses an ad hoc signature for local builds. To use an
 installed Developer ID certificate, provide its exact identity:
 
 ```sh
@@ -70,6 +70,10 @@ SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" ./Scripts/package-a
 
 Developer ID distribution also requires Apple notarization. The packaging
 script does not store or request signing credentials.
+
+Do not use an Apple Development identity for the DMG. Gatekeeper distribution
+requires a Developer ID Application identity. Ad hoc signatures can require a
+new folder permission decision after the app binary changes.
 
 ExplorerPP remains running after its last window closes. It hides its Dock icon
 while it has no visible windows. Open ExplorerPP again to create or restore a

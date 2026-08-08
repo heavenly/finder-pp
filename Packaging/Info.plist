@@ -28,6 +28,16 @@
     <true/>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>ExplorerPP needs access to show and manage files in your Desktop folder.</string>
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>ExplorerPP needs access to show and manage files in your Documents folder.</string>
+    <key>NSDownloadsFolderUsageDescription</key>
+    <string>ExplorerPP needs access to show and manage files in your Downloads folder.</string>
+    <key>NSNetworkVolumesUsageDescription</key>
+    <string>ExplorerPP needs access to browse files on network volumes that you open.</string>
+    <key>NSRemovableVolumesUsageDescription</key>
+    <string>ExplorerPP needs access to browse files on removable volumes that you open.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
 </dict>
