@@ -39,23 +39,26 @@ struct BrowserView: View {
 
     private var navigationBar: some View {
         HStack(spacing: 8) {
-            Button(action: model.goBack) {
-                Image(systemName: "chevron.left")
-            }
-            .disabled(!model.canGoBack)
-            .help("Back")
+            ExplorerToolbarButton(
+                symbol: "chevron.left",
+                help: "Back",
+                isDisabled: !model.canGoBack,
+                action: model.goBack
+            )
 
-            Button(action: model.goForward) {
-                Image(systemName: "chevron.right")
-            }
-            .disabled(!model.canGoForward)
-            .help("Forward")
+            ExplorerToolbarButton(
+                symbol: "chevron.right",
+                help: "Forward",
+                isDisabled: !model.canGoForward,
+                action: model.goForward
+            )
 
-            Button(action: model.goUp) {
-                Image(systemName: "arrow.up")
-            }
-            .disabled(!model.canGoUp)
-            .help("Up one folder")
+            ExplorerToolbarButton(
+                symbol: "arrow.up",
+                help: "Up one folder",
+                isDisabled: !model.canGoUp,
+                action: model.goUp
+            )
 
             PathBar(
                 url: model.currentURL,
@@ -63,10 +66,11 @@ struct BrowserView: View {
                 onSubmit: model.navigate(toPath:)
             )
 
-            Button(action: model.reload) {
-                Image(systemName: "arrow.clockwise")
-            }
-            .help("Refresh")
+            ExplorerToolbarButton(
+                symbol: "arrow.clockwise",
+                help: "Refresh",
+                action: model.reload
+            )
 
             if model.isFindPresented {
                 HStack(spacing: 4) {
@@ -91,44 +95,48 @@ struct BrowserView: View {
                 }
             }
 
-            Divider()
-                .frame(height: 18)
+            ToolbarSeparator()
 
-            Button(action: createFolder) {
-                Image(systemName: "folder.badge.plus")
-            }
-            .help("New Folder")
+            ExplorerToolbarButton(
+                symbol: "folder.badge.plus",
+                help: "New Folder",
+                action: createFolder
+            )
 
-            Button(action: renameSelectedItem) {
-                Image(systemName: "pencil")
-            }
-            .disabled(!model.canRename)
-            .help("Rename")
+            ExplorerToolbarButton(
+                symbol: "pencil",
+                help: "Rename",
+                isDisabled: !model.canRename,
+                action: renameSelectedItem
+            )
 
-            Button(action: model.copySelectedItems) {
-                Image(systemName: "doc.on.doc")
-            }
-            .disabled(!model.hasSelection)
-            .help("Copy")
+            ExplorerToolbarButton(
+                symbol: "doc.on.doc",
+                help: "Copy",
+                isDisabled: !model.hasSelection,
+                action: model.copySelectedItems
+            )
 
-            Button(action: model.cutSelectedItems) {
-                Image(systemName: "scissors")
-            }
-            .disabled(!model.hasSelection)
-            .help("Cut")
+            ExplorerToolbarButton(
+                symbol: "scissors",
+                help: "Cut",
+                isDisabled: !model.hasSelection,
+                action: model.cutSelectedItems
+            )
 
-            Button(action: { model.pasteItems() }) {
-                Image(systemName: "clipboard")
-            }
-            .help("Paste")
+            ExplorerToolbarButton(
+                symbol: "clipboard",
+                help: "Paste",
+                action: { model.pasteItems() }
+            )
 
-            Button(action: model.moveSelectedItemsToTrash) {
-                Image(systemName: "trash")
-            }
-            .disabled(!model.hasSelection)
-            .help("Move to Trash")
+            ExplorerToolbarButton(
+                symbol: "trash",
+                help: "Move to Trash",
+                isDisabled: !model.hasSelection,
+                action: model.moveSelectedItemsToTrash
+            )
         }
-        .buttonStyle(.borderless)
         .padding(10)
         .background(.bar)
     }
@@ -396,7 +404,11 @@ private struct Sidebar: View {
                     Button {
                         model.navigate(to: location.url)
                     } label: {
-                        Label(location.name, systemImage: location.symbol)
+                        HStack(spacing: 8) {
+                            Image(systemName: location.symbol)
+                                .frame(width: 18, height: 18)
+                            Text(location.name)
+                        }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
                     }
@@ -419,6 +431,9 @@ private struct Sidebar: View {
                                     .lineLimit(1)
                             } icon: {
                                 Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 18, height: 18)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .contentShape(Rectangle())
@@ -439,5 +454,44 @@ private struct Sidebar: View {
         }
         .listStyle(.sidebar)
         .navigationSplitViewColumnWidth(min: 170, ideal: 190)
+    }
+}
+
+private struct ExplorerToolbarButton: View {
+    let symbol: String
+    let help: String
+    var isDisabled = false
+    let action: () -> Void
+
+    @State private var isHovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 14, weight: .medium))
+                .symbolRenderingMode(.monochrome)
+                .frame(width: 16, height: 16)
+                .frame(width: 28, height: 28)
+                .contentShape(Rectangle())
+                .background {
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(isHovering && !isDisabled ? Color.primary.opacity(0.08) : Color.clear)
+                }
+        }
+        .buttonStyle(.plain)
+        .focusable(false)
+        .disabled(isDisabled)
+        .foregroundStyle(isDisabled ? .tertiary : .secondary)
+        .onHover { isHovering = $0 }
+        .help(help)
+    }
+}
+
+private struct ToolbarSeparator: View {
+    var body: some View {
+        Rectangle()
+            .fill(.separator)
+            .frame(width: 1, height: 18)
+            .padding(.horizontal, 2)
     }
 }

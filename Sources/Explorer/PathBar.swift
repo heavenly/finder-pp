@@ -35,6 +35,7 @@ struct PathBar: View {
                                 onNavigate(ancestor)
                             }
                             .buttonStyle(.plain)
+                            .focusable(false)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 3)
                         }
