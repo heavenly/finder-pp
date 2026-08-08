@@ -3,6 +3,7 @@ import SwiftUI
 
 struct BrowserView: View {
     @Environment(FavoritesStore.self) private var favorites
+    @Environment(FolderSizeIndex.self) private var folderSizeIndex
     @State private var model = BrowserModel()
     @State private var isCurrentFolderTargeted = false
     @State private var selectionAnchor: URL?
@@ -31,6 +32,12 @@ struct BrowserView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .explorerFilesDidMove)) { _ in
             model.reload()
+        }
+        .onChange(of: model.entries) {
+            folderSizeIndex.index(model.entries)
+        }
+        .onAppear {
+            folderSizeIndex.index(model.entries)
         }
         .onChange(of: model.isFindPresented) {
             searchFieldIsFocused = model.isFindPresented
@@ -160,7 +167,7 @@ struct BrowserView: View {
 
     private var fileList: some View {
         List(model.visibleEntries, selection: $model.selectedURLs) { entry in
-            FileRow(entry: entry)
+            FileRow(entry: entry, sizeText: folderSizeIndex.formattedSize(for: entry))
                 .tag(entry.url)
                 .contentShape(Rectangle())
                 .listRowBackground(
@@ -233,6 +240,12 @@ struct BrowserView: View {
 
                     Button(favorites.contains(entry.url) ? "Remove from Favorites" : "Add to Favorites") {
                         favorites.toggle(entry.url)
+                    }
+
+                    if entry.isDirectory {
+                        Button("Recalculate Folder Size") {
+                            folderSizeIndex.recalculate(entry)
+                        }
                     }
                 }
                 .draggable(entry.url) {
@@ -349,6 +362,7 @@ struct BrowserView: View {
 
 private struct FileRow: View {
     let entry: FileEntry
+    let sizeText: String
 
     var body: some View {
         HStack(spacing: 12) {
@@ -366,7 +380,7 @@ private struct FileRow: View {
                 .frame(width: 150, alignment: .leading)
             Text(entry.kind)
                 .frame(width: 110, alignment: .leading)
-            Text(entry.formattedSize)
+            Text(sizeText)
                 .frame(width: 90, alignment: .trailing)
         }
         .font(.callout)

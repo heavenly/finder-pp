@@ -23,6 +23,8 @@ process.
 - Press **Command-F** to filter the current folder by file name.
 - Right-click a file or folder to add it to the persistent Favorites section.
 - Follow the current macOS light or dark appearance automatically.
+- Calculate folder sizes in the background and cache them between launches.
+- Right-click a folder and select **Recalculate Folder Size** to refresh its cached value.
 
 Explorer hides hidden files in this first release. A move stops if the target
 already contains an item with the same name. The app does not overwrite files.
