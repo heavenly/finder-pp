@@ -273,7 +273,9 @@ struct BrowserView: View {
                         }
                     }
                 }
-                .draggable(entry.url) {
+                .onDrag {
+                    NSItemProvider(object: entry.url as NSURL)
+                } preview: {
                     Label(entry.name, systemImage: entry.isDirectory ? "folder.fill" : "doc")
                         .padding(8)
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))

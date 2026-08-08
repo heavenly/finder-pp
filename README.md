@@ -13,6 +13,7 @@ process.
 - File details and native file icons.
 - Double-click to open folders and files.
 - Drag files between ExplorerPP windows to move them.
+- Drag files and folders from ExplorerPP into other macOS applications.
 - Drag files onto a folder row to move them into that folder.
 - Create folders with **Command-Shift-N**.
 - Rename one selected item with **Return**.
