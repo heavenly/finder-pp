@@ -4,6 +4,7 @@ import SwiftUI
 struct BrowserView: View {
     @State private var model = BrowserModel()
     @State private var isCurrentFolderTargeted = false
+    @State private var selectionAnchor: URL?
 
     var body: some View {
         NavigationSplitView {
@@ -126,6 +127,17 @@ struct BrowserView: View {
             FileRow(entry: entry)
                 .tag(entry.url)
                 .contentShape(Rectangle())
+                .listRowBackground(
+                    model.selectedURLs.contains(entry.url)
+                        ? Color.accentColor.opacity(0.28)
+                        : Color.clear
+                )
+                .simultaneousGesture(
+                    TapGesture()
+                        .onEnded {
+                            select(entry.url, modifiers: NSEvent.modifierFlags)
+                        }
+                )
                 .simultaneousGesture(
                     TapGesture(count: 2)
                         .onEnded {
@@ -230,6 +242,26 @@ struct BrowserView: View {
     private func moveDroppedItems(_ urls: [URL], onto entry: FileEntry) -> Bool {
         guard entry.isDirectory else { return false }
         return model.move(urls, to: entry.url)
+    }
+
+    private func select(_ url: URL, modifiers: NSEvent.ModifierFlags) {
+        if modifiers.contains(.shift),
+           let selectionAnchor,
+           let anchorIndex = model.entries.firstIndex(where: { $0.url == selectionAnchor }),
+           let selectedIndex = model.entries.firstIndex(where: { $0.url == url }) {
+            let range = min(anchorIndex, selectedIndex)...max(anchorIndex, selectedIndex)
+            model.selectedURLs = Set(range.map { model.entries[$0].url })
+        } else if modifiers.contains(.command) {
+            if model.selectedURLs.contains(url) {
+                model.selectedURLs.remove(url)
+            } else {
+                model.selectedURLs.insert(url)
+            }
+            selectionAnchor = url
+        } else {
+            model.selectedURLs = [url]
+            selectionAnchor = url
+        }
     }
 }
 
