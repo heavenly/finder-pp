@@ -18,6 +18,7 @@ struct BrowserView: View {
             }
         }
         .navigationTitle(model.currentURL.lastPathComponent.isEmpty ? "Mac" : model.currentURL.lastPathComponent)
+        .focusedSceneValue(\.browserModel, model)
         .alert("Explorer", isPresented: errorIsPresented) {
             Button("OK") {
                 model.errorMessage = nil
@@ -60,6 +61,43 @@ struct BrowserView: View {
                 Image(systemName: "arrow.clockwise")
             }
             .help("Refresh")
+
+            Divider()
+                .frame(height: 18)
+
+            Button(action: createFolder) {
+                Image(systemName: "folder.badge.plus")
+            }
+            .help("New Folder")
+
+            Button(action: renameSelectedItem) {
+                Image(systemName: "pencil")
+            }
+            .disabled(!model.canRename)
+            .help("Rename")
+
+            Button(action: model.copySelectedItems) {
+                Image(systemName: "doc.on.doc")
+            }
+            .disabled(!model.hasSelection)
+            .help("Copy")
+
+            Button(action: model.cutSelectedItems) {
+                Image(systemName: "scissors")
+            }
+            .disabled(!model.hasSelection)
+            .help("Cut")
+
+            Button(action: { model.pasteItems() }) {
+                Image(systemName: "clipboard")
+            }
+            .help("Paste")
+
+            Button(action: model.moveSelectedItemsToTrash) {
+                Image(systemName: "trash")
+            }
+            .disabled(!model.hasSelection)
+            .help("Move to Trash")
         }
         .buttonStyle(.borderless)
         .padding(10)
@@ -88,8 +126,41 @@ struct BrowserView: View {
             FileRow(entry: entry)
                 .tag(entry.url)
                 .contentShape(Rectangle())
-                .onTapGesture(count: 2) {
-                    model.open(entry.url)
+                .simultaneousGesture(
+                    TapGesture(count: 2)
+                        .onEnded {
+                            model.open(entry.url)
+                        }
+                )
+                .contextMenu {
+                    Button("Open") {
+                        model.open(entry.url)
+                    }
+
+                    Divider()
+
+                    Button("Cut") {
+                        selectForContextMenu(entry.url)
+                        model.cutSelectedItems()
+                    }
+                    Button("Copy") {
+                        selectForContextMenu(entry.url)
+                        model.copySelectedItems()
+                    }
+                    Button("Paste") {
+                        model.pasteItems(to: entry.isDirectory ? entry.url : model.currentURL)
+                    }
+
+                    Divider()
+
+                    Button("Rename") {
+                        selectForContextMenu(entry.url)
+                        renameSelectedItem()
+                    }
+                    Button("Move to Trash") {
+                        selectForContextMenu(entry.url)
+                        model.moveSelectedItemsToTrash()
+                    }
                 }
                 .draggable(entry.url) {
                     Label(entry.name, systemImage: entry.isDirectory ? "folder.fill" : "doc")
@@ -97,8 +168,7 @@ struct BrowserView: View {
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
                 }
                 .dropDestination(for: URL.self) { urls, _ in
-                    guard entry.isDirectory else { return false }
-                    return model.move(urls, to: entry.url)
+                    moveDroppedItems(urls, onto: entry)
                 }
         }
         .listStyle(.inset(alternatesRowBackgrounds: true))
@@ -117,6 +187,12 @@ struct BrowserView: View {
         } isTargeted: { isTargeted in
             isCurrentFolderTargeted = isTargeted
         }
+        .contextMenu {
+            Button("New Folder", action: createFolder)
+            Button("Paste", action: { model.pasteItems() })
+            Divider()
+            Button("Refresh", action: model.reload)
+        }
     }
 
     private var errorIsPresented: Binding<Bool> {
@@ -124,6 +200,36 @@ struct BrowserView: View {
             get: { model.errorMessage != nil },
             set: { if !$0 { model.errorMessage = nil } }
         )
+    }
+
+    private func createFolder() {
+        guard let name = FileNamePrompt.show(
+            title: "New Folder",
+            message: "Enter a name for the new folder.",
+            defaultValue: "New Folder"
+        ) else { return }
+        model.createFolder(named: name)
+    }
+
+    private func renameSelectedItem() {
+        guard let item = model.selectedURLs.first else { return }
+        guard let name = FileNamePrompt.show(
+            title: "Rename",
+            message: "Enter a new name for “\(item.lastPathComponent)”.",
+            defaultValue: item.lastPathComponent
+        ) else { return }
+        model.renameSelectedItem(to: name)
+    }
+
+    private func selectForContextMenu(_ url: URL) {
+        if !model.selectedURLs.contains(url) {
+            model.selectedURLs = [url]
+        }
+    }
+
+    private func moveDroppedItems(_ urls: [URL], onto entry: FileEntry) -> Bool {
+        guard entry.isDirectory else { return false }
+        return model.move(urls, to: entry.url)
     }
 }
 

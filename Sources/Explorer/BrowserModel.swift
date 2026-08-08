@@ -15,9 +15,14 @@ final class BrowserModel {
     private(set) var forwardHistory: [URL] = []
     var selectedURLs: Set<URL> = []
     var errorMessage: String?
+    let pasteboard: NSPasteboard
 
-    init(startingAt url: URL = FileManager.default.homeDirectoryForCurrentUser) {
+    init(
+        startingAt url: URL = FileManager.default.homeDirectoryForCurrentUser,
+        pasteboard: NSPasteboard = .general
+    ) {
         currentURL = url.standardizedFileURL
+        self.pasteboard = pasteboard
         reload()
     }
 

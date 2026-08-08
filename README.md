@@ -14,6 +14,11 @@ process.
 - Double-click to open folders and files.
 - Drag files between Explorer windows to move them.
 - Drag files onto a folder row to move them into that folder.
+- Create folders with **Command-Shift-N**.
+- Rename one selected item with **Return**.
+- Copy, Cut, and Paste with the standard macOS shortcuts.
+- Move selected items to the Trash with **Command-Delete**.
+- Right-click items for file-management actions.
 
 Explorer hides hidden files in this first release. A move stops if the target
 already contains an item with the same name. The app does not overwrite files.
@@ -37,9 +42,8 @@ sandbox permissions, and DMG packaging are separate distribution steps.
 
 ## Roadmap
 
-1. Add copy, cut, paste, rename, delete, and new-folder actions.
-2. Add collision prompts and a file-operation progress queue.
-3. Add tabs, configurable columns, sorting, and hidden-file controls.
-4. Add Quick Look, search, network shares, and mounted-volume navigation.
-5. Add state restoration and saved favorites.
-6. Add an Xcode distribution target, app icon, signing, notarization, and DMG.
+1. Add collision prompts and a file-operation progress queue.
+2. Add tabs, configurable columns, sorting, and hidden-file controls.
+3. Add Quick Look, search, network shares, and mounted-volume navigation.
+4. Add state restoration and saved favorites.
+5. Add an Xcode distribution target, app icon, signing, notarization, and DMG.
