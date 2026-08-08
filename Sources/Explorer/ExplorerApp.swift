@@ -6,12 +6,14 @@ struct ExplorerApp: App {
     @NSApplicationDelegateAdaptor(ExplorerAppDelegate.self) private var appDelegate
     @State private var favorites = FavoritesStore()
     @State private var folderSizeIndex = FolderSizeIndex()
+    @State private var mediaThumbnails = MediaThumbnailStore()
 
     var body: some Scene {
         WindowGroup("Explorer", id: "browser") {
             BrowserView()
                 .environment(favorites)
                 .environment(folderSizeIndex)
+                .environment(mediaThumbnails)
                 .preferredColorScheme(nil)
         }
         .defaultSize(width: 1_050, height: 680)

@@ -396,10 +396,7 @@ private struct FileRow: View {
     var body: some View {
         HStack(spacing: 12) {
             HStack(spacing: 8) {
-                Image(nsImage: NSWorkspace.shared.icon(forFile: entry.url.path))
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
+                FileIcon(entry: entry)
                 Text(entry.name)
                     .lineLimit(1)
             }
@@ -414,6 +411,30 @@ private struct FileRow: View {
         }
         .font(.callout)
         .padding(.vertical, 2)
+    }
+}
+
+private struct FileIcon: View {
+    @Environment(MediaThumbnailStore.self) private var mediaThumbnails
+    let entry: FileEntry
+
+    var body: some View {
+        Group {
+            if let thumbnail = mediaThumbnails.thumbnail(for: entry) {
+                Image(nsImage: thumbnail)
+                    .resizable()
+                    .scaledToFill()
+                    .clipShape(RoundedRectangle(cornerRadius: 3))
+            } else {
+                Image(nsImage: NSWorkspace.shared.icon(forFile: entry.url.path))
+                    .resizable()
+                    .scaledToFit()
+            }
+        }
+        .frame(width: 20, height: 20)
+        .task(id: entry) {
+            await mediaThumbnails.loadThumbnail(for: entry)
+        }
     }
 }
 

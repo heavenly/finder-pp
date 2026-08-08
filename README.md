@@ -26,6 +26,7 @@ process.
 - Calculate folder sizes in the background and cache them between launches.
 - Right-click a folder and select **Recalculate Folder Size** to refresh its cached value.
 - Click Name, Date modified, Type, or Size to sort in ascending or descending order.
+- Show small image, video, and audio previews in file rows when Quick Look supports them.
 
 Explorer hides hidden files in this first release. A move stops if the target
 already contains an item with the same name. The app does not overwrite files.
