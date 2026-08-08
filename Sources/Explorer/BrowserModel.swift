@@ -83,6 +83,20 @@ final class BrowserModel {
         }
     }
 
+    func open(_ url: URL, with applicationURL: URL) {
+        let configuration = NSWorkspace.OpenConfiguration()
+        NSWorkspace.shared.open(
+            [url],
+            withApplicationAt: applicationURL,
+            configuration: configuration
+        ) { [weak self] _, error in
+            guard let error else { return }
+            Task { @MainActor in
+                self?.errorMessage = "Could not open “\(url.lastPathComponent)” with “\(applicationURL.deletingPathExtension().lastPathComponent)”.\n\(error.localizedDescription)"
+            }
+        }
+    }
+
     @discardableResult
     func move(_ urls: [URL], to destinationDirectory: URL) -> Bool {
         var movedAnyItem = false

@@ -19,6 +19,7 @@ process.
 - Copy, Cut, and Paste with the standard macOS shortcuts.
 - Move selected items to the Trash with **Command-Delete**.
 - Right-click items for file-management actions.
+- Use the right-click **Open With** submenu to choose a compatible application.
 
 Explorer hides hidden files in this first release. A move stops if the target
 already contains an item with the same name. The app does not overwrite files.

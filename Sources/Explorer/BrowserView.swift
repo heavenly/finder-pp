@@ -149,6 +149,25 @@ struct BrowserView: View {
                         model.open(entry.url)
                     }
 
+                    Menu("Open With") {
+                        let applications = openWithApplications(for: entry.url)
+                        if applications.isEmpty {
+                            Text("No Applications Found")
+                        } else {
+                            ForEach(applications, id: \.self) { applicationURL in
+                                Button {
+                                    model.open(entry.url, with: applicationURL)
+                                } label: {
+                                    Label {
+                                        Text(applicationURL.deletingPathExtension().lastPathComponent)
+                                    } icon: {
+                                        Image(nsImage: NSWorkspace.shared.icon(forFile: applicationURL.path))
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     Divider()
 
                     Button("Cut") {
@@ -261,6 +280,15 @@ struct BrowserView: View {
         } else {
             model.selectedURLs = [url]
             selectionAnchor = url
+        }
+    }
+
+    private func openWithApplications(for url: URL) -> [URL] {
+        let applications = NSWorkspace.shared.urlsForApplications(toOpen: url)
+        return Array(Set(applications)).sorted {
+            $0.deletingPathExtension().lastPathComponent.localizedStandardCompare(
+                $1.deletingPathExtension().lastPathComponent
+            ) == .orderedAscending
         }
     }
 }
