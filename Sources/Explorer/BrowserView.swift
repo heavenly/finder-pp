@@ -290,13 +290,7 @@ struct BrowserView: View {
                         }
                     }
                 }
-                .onDrag {
-                    NSItemProvider(object: entry.url as NSURL)
-                } preview: {
-                    Label(entry.name, systemImage: entry.isDirectory ? "folder.fill" : "doc")
-                        .padding(8)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
-                }
+                .modifier(FileDragSource(entry: entry))
                 .dropDestination(for: URL.self) { urls, _ in
                     moveDroppedItems(urls, onto: entry)
                 }
@@ -328,6 +322,7 @@ struct BrowserView: View {
             Divider()
             Button("Refresh", action: model.reload)
         }
+        .modifier(MultiFileDragContainer(selection: model.selectedURLs))
     }
 
     private var errorIsPresented: Binding<Bool> {
@@ -642,5 +637,41 @@ private struct SortHeader: View {
         .buttonStyle(.plain)
         .focusable(false)
         .help("Sort by \(title)")
+    }
+}
+
+private struct FileDragSource: ViewModifier {
+    let entry: FileEntry
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(macOS 26.0, *) {
+            content.draggable(containerItemID: entry.url)
+        } else {
+            content.onDrag {
+                NSItemProvider(object: entry.url as NSURL)
+            } preview: {
+                Label(entry.name, systemImage: entry.isDirectory ? "folder.fill" : "doc")
+                    .padding(8)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+            }
+        }
+    }
+}
+
+private struct MultiFileDragContainer: ViewModifier {
+    let selection: Set<URL>
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(macOS 26.0, *) {
+            content
+                .dragContainer(for: URL.self, itemID: \.self) { (urls: [URL]) in
+                    urls
+                }
+                .dragContainerSelection(Array(selection))
+        } else {
+            content
+        }
     }
 }
